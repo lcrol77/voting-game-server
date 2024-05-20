@@ -12,14 +12,14 @@ const io = new Server(httpServer, {
 
 type setToggle = {
 	isSet: boolean,
-	toggle: number,
+	id: string,
 };
 
 // Middleware
 app.use(express.json());
 
 // Serve a simple route
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
 	res.send('WebSocket server is running');
 });
 
