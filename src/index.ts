@@ -20,6 +20,13 @@ type User = {
     numberOfVotes: number,
 };
 
+type GameInfo = {
+    roundInProgress: boolean
+    timeout: NodeJS.Timeout | null
+    roundNumber: number
+    timeRemaining: number
+}
+
 type UserId = string;
 type SocketId = string;
 
@@ -29,6 +36,13 @@ app.get('/', (_, res) => {
 });
 
 const users = new Map<UserId, User>();
+
+const gameInfo: GameInfo = {
+    roundInProgress: false,
+    timeout: null,
+    roundNumber: 0,
+    timeRemaining: 0,
+}
 
 function getUsersList(): User[] {
     const userList: User[] = []
@@ -43,10 +57,10 @@ function getIdFromSocketId(socketId: String): UserId {
     return users.length > 0 ? users[0].id : "";
 }
 
+
 // Socket.io connection
 io.on('connection', (socket: Socket) => {
     console.log(`User connected: ${socket.id}`);
-
     socket.on('userJoined', (user: User) => {
         const newUser: User = {
             ...user,
@@ -82,6 +96,34 @@ io.on('connection', (socket: Socket) => {
         io.emit('updateUsers', getUsersList())
         console.log(`User disconnected: ${socket.id}`);
     });
+    socket.on("start", () => {
+        console.log("start")
+        if (gameInfo.timeout != null) {
+            // there is already a round running on this game info
+            return
+        }
+        gameInfo.timeRemaining = 31
+        gameInfo.roundNumber += 1
+        gameInfo.roundInProgress = true
+        gameInfo.timeout = setInterval(function() {
+            gameInfo.timeRemaining -= 1
+            if (gameInfo.timeRemaining <= 0 && gameInfo.timeout != null) {
+                clearInterval(gameInfo.timeout)
+                gameInfo.timeout = null
+                gameInfo.roundInProgress = false
+            }
+            io.emit("gameInfo", gameInfo);
+        }, 1000)
+    })
+    socket.on("end", () => {
+        if (gameInfo.timeout == null) {
+            return
+        }
+        clearInterval(gameInfo.timeout);
+        gameInfo.roundInProgress = false
+        gameInfo.timeout = null
+        io.emit("gameInfo", gameInfo);
+    })
 });
 
 const PORT = process.env.PORT || 8080;
