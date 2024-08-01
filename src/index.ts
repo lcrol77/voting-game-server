@@ -84,9 +84,10 @@ io.on('connection', (socket: Socket) => {
             // there is already a round running on this game info
             return
         }
-        gameInfo.timeRemaining = 31
+        gameInfo.timeRemaining = 30
         gameInfo.roundNumber += 1
         gameInfo.roundInProgress = true
+        io.emit("gameInfo", gameInfo);
         gameInfo.timeout = setInterval(function() {
             gameInfo.timeRemaining -= 1
             if (gameInfo.timeRemaining <= 0 && gameInfo.timeout != null) {
