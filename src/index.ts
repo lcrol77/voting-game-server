@@ -1,7 +1,7 @@
-import { log } from 'console';
 import express from 'express';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import { GameInfo, User, UserId } from './types';
 
 const app = express();
 const httpServer = createServer(app);
@@ -11,24 +11,6 @@ const io = new Server(httpServer, {
     }
 });
 
-type User = {
-    name: string,
-    id: UserId,
-    socketId: SocketId | null
-    currentVote: UserId | null,
-    previousVote: UserId | null,
-    numberOfVotes: number,
-};
-
-type GameInfo = {
-    roundInProgress: boolean
-    timeout: NodeJS.Timeout | null
-    roundNumber: number
-    timeRemaining: number
-}
-
-type UserId = string;
-type SocketId = string;
 
 app.use(express.json());
 app.get('/', (_, res) => {
