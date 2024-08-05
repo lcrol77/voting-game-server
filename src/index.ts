@@ -3,6 +3,13 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { GameInfo, User, UserId } from './types';
 import { initEventHandler } from './utils/socket';
+import fs from "fs";
+
+export const prompts = fs.readFileSync("./prompts")
+    .toString()
+    .split(/\n/g)
+    .filter((el) => el !== "");
+console.log(prompts);
 
 const app = express();
 const httpServer = createServer(app);
@@ -11,7 +18,6 @@ const io = new Server(httpServer, {
         origin: "*",
     }
 });
-
 
 app.use(express.json());
 app.get('/', (_, res) => {
@@ -25,6 +31,8 @@ export const gameInfo: GameInfo = {
     timeout: null,
     roundNumber: 0,
     timeRemaining: 0,
+    prompt: null,
+    users: []
 }
 
 initEventHandler(io);
