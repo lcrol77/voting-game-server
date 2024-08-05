@@ -6,7 +6,14 @@ export function getUsersList(): User[] {
     users.forEach((user: User) => {
         userList.push(user);
     });
-    return userList
+    return userList.sort((a, b)=>{
+        if(a.roundsWon === b.roundsWon) {
+            return 0;
+        } else if (a.roundsWon < b.roundsWon){
+            return -1
+        }
+        return 1
+    })
 }
 
 export function getIdFromSocketId(socketId: String): UserId {

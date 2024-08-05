@@ -2,7 +2,8 @@ import { Socket, Server } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import { User } from "../types";
 import { getIdFromSocketId, getUsersList } from "./userUtils";
-import { gameInfo, users } from "..";
+import { gameInfo, prompts, users } from "..";
+import { samplePrompts } from "./prompts";
 
 let io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
 
@@ -67,6 +68,8 @@ function start(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, 
         gameInfo.timeRemaining = 30
         gameInfo.roundNumber += 1
         gameInfo.roundInProgress = true
+        gameInfo.prompt = samplePrompts();
+        gameInfo.users = getUsersList()
         io.emit("gameInfo", gameInfo);
         gameInfo.timeout = setInterval(function() {
             gameInfo.timeRemaining -= 1
