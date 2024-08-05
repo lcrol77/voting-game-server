@@ -14,18 +14,38 @@ export const initEventHandler = (io: Server<DefaultEventsMap, DefaultEventsMap, 
         socket.on("vote", vote(io, socket));
         socket.on("start", start(io, socket))
         socket.on("end", end(io, socket))
-        socket.on('disconnect', () => {
-            const user: User | undefined = users.get(getIdFromSocketId(socket.id));
-            if (user != null && user.currentVote != null) {
-                users.get(user.currentVote)!.numberOfVotes--;
-            }
-            users.delete(getIdFromSocketId(socket.id))
-            io.emit('updateUsers', getUsersList())
-            console.log(`User disconnected: ${socket.id}`);
+        socket.on("reconnect", reconnect(io, socket))
+        socket.on('disconnect', async () => {
+            setTimeout(async () => {
+                const sockets = await io.in(getIdFromSocketId(socket.id)).fetchSockets();
+                const hasReconnected = sockets.length > 0;
+
+                if (!hasReconnected) {
+                    const user: User | undefined = users.get(getIdFromSocketId(socket.id));
+                    if (user != null && user.currentVote != null) {
+                        users.get(user.currentVote)!.numberOfVotes--;
+                    }
+                    users.delete(getIdFromSocketId(socket.id))
+                    io.emit('updateUsers', getUsersList())
+                    console.log(`User disconnected: ${socket.id}`);
+                }
+            }, 10_000)
         });
     });
 };
 
+function reconnect(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, socket: Socket) {
+
+    return async (userId: string) => {
+        const user = users.get(userId);
+        if (user == null) {
+            io.to(socket.id).emit("reconnect", null);
+            return;
+        }
+        user.socketId = socket.id
+        io.to(socket.id).emit("reconnect", user);
+    }
+}
 function userJoined(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, socket: Socket): (user: User) => Promise<void> {
     return async (user: User) => {
         const newUser: User = {
@@ -60,7 +80,6 @@ function vote(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, a
 
 function start(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, _: Socket) {
     return async () => {
-        console.log("start")
         if (gameInfo.timeout != null) {
             // there is already a round running on this game info
             return

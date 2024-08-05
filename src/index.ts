@@ -9,7 +9,6 @@ export const prompts = fs.readFileSync("./prompts")
     .toString()
     .split(/\n/g)
     .filter((el) => el !== "");
-console.log(prompts);
 
 const app = express();
 const httpServer = createServer(app);
